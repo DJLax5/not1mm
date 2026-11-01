@@ -177,6 +177,7 @@ class MainWindow(QtWidgets.QMainWindow):
     log_window = None
     check_window = None
     bandmap_window = None
+    spot_near = ""
     cluster_window = None
     vfo_window = None
     rate_window = None
@@ -401,6 +402,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.radioButton_sp.clicked.connect(self.run_sp_buttons_clicked)
         self.score.setText("0")
         self.callsign.textEdited.connect(self.callsign_changed)
+        self.callsign_placeholder = self.callsign.placeholderText()
         self.callsign.returnPressed.connect(self.check_esm_with_enter)
         self.callsign.cursorPositionChanged.connect(self.check_esm)
         self.callsign.installEventFilter(self)
@@ -1414,6 +1416,14 @@ class MainWindow(QtWidgets.QMainWindow):
                 cmd["worked"] = result
                 if self.bandmap_window:
                     self.bandmap_window.msg_from_main(cmd)
+                return
+
+            if msg.get("cmd", "") == "SPOTNEAR":
+                # Show the call of the spot near the VFO as a gray hint.
+                self.spot_near = msg.get("call", "")
+                self.callsign.setPlaceholderText(
+                    self.spot_near or self.callsign_placeholder
+                )
                 return
 
             if msg.get("cmd", "") == "CHANGECALL":
@@ -4439,6 +4449,8 @@ class MainWindow(QtWidgets.QMainWindow):
         self.callsign.setCursorPosition(position)
 
         if " " in text:
+            if not stripped_text and self.grab_spot():
+                return
             if stripped_text in ["CW", "RTTY", "SSB", "FM", "AM", "LSB", "USB"]:
                 self.change_mode(stripped_text)
                 return
@@ -4492,6 +4504,27 @@ class MainWindow(QtWidgets.QMainWindow):
             and hasattr(self.contest, "populate_history_info_line")
         ):
             self.contest.populate_history_info_line(self)
+
+    def grab_spot(self) -> bool:
+        """
+        Put the call of the spot near the VFO in the empty callsign field.
+
+        Parameters
+        ----------
+        None
+
+        Returns
+        -------
+        bool
+        True if the call was put in the field.
+        """
+        if self.spot_near and not self.callsign.text():
+            cmd = {}
+            cmd["cmd"] = "CHANGECALL"
+            cmd["call"] = self.spot_near
+            self.dockwidget_message(cmd)
+            return True
+        return False
 
     def change_freq(self, stripped_text: str) -> None:
         """
