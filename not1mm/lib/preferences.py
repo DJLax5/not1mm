@@ -68,6 +68,20 @@ class Preferences:
         "cluster_font_size": 10,
         "cluster_filter": "Set DX Filter SpotterCont=NA",
         "cluster_mode": "OPEN",
+        # The cluster software is found when one of its keywords is in the
+        # text the server sends before the login is acknowledged.
+        "cluster_detect": {"dxspider": ["dxspider"]},
+        # Commands sent after login. The key "cc" is the fallback.
+        # {filter} is cluster_filter. {mode} is cluster_mode.
+        "cluster_commands": {
+            "cc": [
+                "{filter}",
+                "set dx extension Section",
+                "set dx mode {mode}",
+                "sh wwv 1",
+            ],
+            "dxspider": ["{filter}", "show/wwv 1"],
+        },
         "cluster_expire": 1,
         "logwindow": False,
         "bandmapwindow": False,
