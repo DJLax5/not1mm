@@ -493,11 +493,13 @@ class BandMapWindow(QDockWidget):
         """Send the call of the spot in the RX passband to the main window."""
         if not self.rx_freq:
             return
-        # Use the radio bandwidth. If the radio gives none, use the mode.
-        if self.bandwidth:
+        # A spot is on the dial frequency. The SSB passband is on one side of
+        # it, thus the radio bandwidth is too wide. Use a fixed value for phone.
+        # For other modes, use the radio bandwidth. If there is none, use 0.25.
+        if mode in ("LSB", "USB", "AM", "FM", "SSB"):
+            tolerance = self.settings.get("spot_near_phone_khz", 0.5)
+        elif self.bandwidth:
             tolerance = self.bandwidth / 2 / 1000
-        elif mode in ("LSB", "USB", "AM", "FM", "SSB"):
-            tolerance = 1.5
         else:
             tolerance = 0.25
         spot = self.spots.get_spot_near(self.rx_freq, tolerance)
