@@ -456,7 +456,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
         self.F1.setContextMenuPolicy(QtCore.Qt.ContextMenuPolicy.CustomContextMenu)
         self.F1.customContextMenuRequested.connect(lambda x: self.edit_macro(self.F1))
-        self.F1.clicked.connect(lambda x: self.process_f1())
+        self.F1.clicked.connect(lambda x: self.process_function_key(self.F1))
         self.F2.setContextMenuPolicy(QtCore.Qt.ContextMenuPolicy.CustomContextMenu)
         self.F2.customContextMenuRequested.connect(lambda x: self.edit_macro(self.F2))
         self.F2.clicked.connect(lambda x: self.process_function_key(self.F2))
@@ -2796,11 +2796,6 @@ class MainWindow(QtWidgets.QMainWindow):
             cmd["comment"] = f"CQ {self.current_mode} MARKED"
             self.bandmap_window.msg_from_main(cmd)
 
-    def process_f1(self) -> None:
-        """Send the F1 macro and mark the CQ frequency."""
-        self.process_function_key(self.F1)
-        self.mark_cq()
-
     def mark_spot(self, comment="") -> None:
         """Send a command to the bandmap window to mark the current call."""
         freq = self.radio_state.get("vfoa")
@@ -3042,7 +3037,7 @@ class MainWindow(QtWidgets.QMainWindow):
                 self.auto_cq_time = datetime.datetime.now(
                     tz=datetime.UTC
                 ) + datetime.timedelta(milliseconds=self.auto_cq_delay)
-            self.process_f1()
+            self.process_function_key(self.F1)
             return
         if event.key() == Qt.Key.Key_F2:
             self.process_function_key(self.F2)
@@ -3862,6 +3857,8 @@ class MainWindow(QtWidgets.QMainWindow):
         """
 
         logger.debug("Function Key: %s", function_key.text())
+        if function_key is self.F1:
+            self.mark_cq()
         if self._is_phone_mode():
             self.voice_output_available = has_output_device(
                 self.pref.get("sounddevice", "default")
