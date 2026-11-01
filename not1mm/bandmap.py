@@ -243,6 +243,28 @@ class Database:
         )
         return self.cursor.fetchone()
 
+    def get_spot_near(self, freq: float, tolerance: float) -> dict:
+        """
+        Return the spot that is nearest to freq and in the tolerance.
+
+        Parameters
+        ----------
+        freq : float
+        The frequency in kHz.
+        tolerance : float
+        The maximum distance from freq in kHz.
+
+        Returns
+        -------
+        A dict of the spot, or None.
+        """
+        self.cursor.execute(
+            "select * from spots where freq >= ? and freq <= ? "
+            "order by abs(freq - ?) ASC;",
+            (freq - tolerance, freq + tolerance, freq),
+        )
+        return self.cursor.fetchone()
+
     def get_matching_spot(self, dx: str, start: float, end: float) -> dict:
         """
         Return the first spot matching supplied dx partial callsign.
@@ -405,6 +427,7 @@ class BandMapWindow(QDockWidget):
     test_for_data = None
     bandwidth = 0
     bandwidth_mark = []  # noqa: RUF012
+    spot_near = ""
     worked_list = {}  # noqa: RUF012
     multicast_interface = None
     text_color = QColor(45, 45, 45)
@@ -461,7 +484,27 @@ class BandMapWindow(QDockWidget):
 
     def setActive(self, mode: bool):
         self.active = bool(mode)
+        if self.active is False and self.spot_near:
+            self.spot_near = ""
+            self.message.emit({"cmd": "SPOTNEAR", "call": ""})
         self.request_workedlist()
+
+    def send_spot_near(self, mode: str) -> None:
+        """Send the call of the spot in the RX passband to the main window."""
+        if not self.rx_freq:
+            return
+        # Use the radio bandwidth. If the radio gives none, use the mode.
+        if self.bandwidth:
+            tolerance = self.bandwidth / 2 / 1000
+        elif mode in ("LSB", "USB", "AM", "FM", "SSB"):
+            tolerance = 1.5
+        else:
+            tolerance = 0.25
+        spot = self.spots.get_spot_near(self.rx_freq, tolerance)
+        call = spot.get("callsign", "") if spot else ""
+        if call != self.spot_near:
+            self.spot_near = call
+            self.message.emit({"cmd": "SPOTNEAR", "call": call})
 
     def msg_from_main(self, packet):
         """Process messages from the main screen."""
@@ -483,6 +526,7 @@ class BandMapWindow(QDockWidget):
             self.bandwidth = int(bw_returned)
             step, _ = self.determine_step_digits()
             self.drawTXRXMarks(step)
+            self.send_spot_near(packet.get("mode", ""))
             return
         if packet.get("cmd", "") == "NEXTSPOT" and self.rx_freq:
             spot = self.spots.get_next_spot(self.rx_freq + 0.001, self.currentBand.end)

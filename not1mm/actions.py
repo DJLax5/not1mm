@@ -83,6 +83,11 @@ def NEXT_SPOT(self) -> None:
         self.bandmap_window.msg_from_main(cmd)
 
 
+def GRAB_SPOT(self) -> None:
+    """Put the call of the spot near the VFO in the empty callsign field"""
+    self.grab_spot()
+
+
 def FIND_DX(self) -> None:
     """Tune to a spot matching the partial callsign"""
     dx = self.callsign.text()
