@@ -139,6 +139,7 @@ class MainWindow(QtWidgets.QMainWindow):
     station: typing.ClassVar = {}
     spaceweather = ""
     current_mode = ""
+    band_button_vfo = 0
     cw = None
     run_state = False
     fkeys: typing.ClassVar = {}
@@ -1660,8 +1661,11 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def change_to_band_and_mode(self, band_name: str, mode: str) -> None:
         """
-        Look up a sensible frequency for the chosen band and mode via fakefreq(),
-        then push it to the rig (and bandmap) through change_freq() and change_mode().
+        Store the current frequency for the current band and mode in the
+        "band_memory" preference. Then tune to the stored frequency for the
+        chosen band and mode. If no frequency is stored, use fakefreq().
+        Push the frequency to the rig (and bandmap) through change_freq() and
+        change_mode().
 
         Used by the on-screen band buttons (CW/SSB/RTTY x 17 bands). For modes other
         than CW/SSB/RTTY the call is a no-op.
@@ -1679,10 +1683,34 @@ class MainWindow(QtWidgets.QMainWindow):
         """
 
         if mode in ["CW", "SSB", "RTTY"]:
+            # Copy the dict. Do not change the dict in Preferences._defaults.
+            band_memory = self.pref.get("band_memory", {})
+            band_memory = dict(band_memory) if isinstance(band_memory, dict) else {}
+            vfo = str(self.radio_state.get("vfoa", ""))
+            current_band = getband(vfo) if vfo.isnumeric() else ""
+            # Do not store the frequency that the last band button set.
+            # The rig can report it before the new mode, so the key can be wrong.
+            if (
+                current_band
+                and self.current_mode in ("CW", "SSB", "RTTY")
+                and int(vfo) != self.band_button_vfo
+            ):
+                band_memory[f"{current_band}|{self.current_mode}"] = int(vfo)
+                if band_memory != self.pref.get("band_memory"):
+                    self.pref["band_memory"] = band_memory
+                    Preferences.save()
+
             freq = fakefreq(band_name, mode)
+            # The stored value is in Hz. Use it only if it is in the band.
+            stored = str(band_memory.get(f"{band_name}|{mode}", ""))
+            if stored.isnumeric() and getband(stored) == band_name:
+                freq = str(int(stored) / 1000)
+            if not freq:
+                return
             self.change_freq(freq)
             vfo = float(freq)
-            vfo = int(vfo * 1000)
+            vfo = round(vfo * 1000)
+            self.band_button_vfo = vfo
             if mode == "CW":
                 mode = self.rig_control.last_cw_mode
             if mode == "RTTY":
@@ -4426,7 +4454,7 @@ class MainWindow(QtWidgets.QMainWindow):
         """
 
         vfo = float(stripped_text)
-        vfo = int(vfo * 1000)
+        vfo = round(vfo * 1000)
 
         if self.rig_control:
             self.rig_control.set_vfo(vfo)
