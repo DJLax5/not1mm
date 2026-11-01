@@ -78,6 +78,7 @@ class Preferences:
         "statisticswindow": False,
         "darkmode": True,
         "language": "en_US",
+        "spot_near_phone_khz": 0.5,
     }
 
     @classmethod
