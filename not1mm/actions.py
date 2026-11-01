@@ -68,7 +68,7 @@ def TOGGLE_CW_INPUT(self) -> None:
 
 
 def PREV_SPOT(self) -> None:
-    """Jump to the previous spot in the bandmap"""
+    """Jump to the previous spot in the bandmap. Skip the dupes."""
     cmd = {}
     cmd["cmd"] = "PREVSPOT"
     if self.bandmap_window:
@@ -76,7 +76,7 @@ def PREV_SPOT(self) -> None:
 
 
 def NEXT_SPOT(self) -> None:
-    """Jump to the next spot in the bandmap"""
+    """Jump to the next spot in the bandmap. Skip the dupes."""
     cmd = {}
     cmd["cmd"] = "NEXTSPOT"
     if self.bandmap_window:
