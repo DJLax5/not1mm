@@ -97,7 +97,6 @@ class Preferences:
         "darkmode": True,
         "language": "en_US",
         "export_dir": "",
-        "show_utc_clock": True,
         "spot_near_phone_khz": 0.5,
     }
 
