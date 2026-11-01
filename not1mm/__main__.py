@@ -103,7 +103,7 @@ from not1mm.lib.i18n import (
     retranslate_all,
 )
 from not1mm.lib.multicast import Multicast
-from not1mm.lib.n1mm import N1MM
+from not1mm.lib.n1mm import N1MM, SPOT_MODES
 from not1mm.lib.new_contest import NewContest
 from not1mm.lib.preferences import Preferences
 from not1mm.lib.select_contest import SelectContest
@@ -1425,6 +1425,16 @@ class MainWindow(QtWidgets.QMainWindow):
             if msg.get("cmd", "") == "CHECKSPOTS" and self.check_window:
                 msg["call"] = self.callsign.text()
                 self.check_window.msg_from_main(msg)
+
+            if msg.get("cmd", "") == "DX":
+                # Send the spot before the bandmap changes the msg.
+                self.send_n1mm_spot(
+                    msg.get("dx", ""),
+                    msg.get("freq", 0.0),
+                    msg.get("spotter", ""),
+                    msg.get("comment", ""),
+                    msg.get("ts", ""),
+                )
 
             if msg.get("cmd", "") == "DX" and self.bandmap_window:
                 self.bandmap_window.msg_from_main(msg)
@@ -2783,8 +2793,42 @@ class MainWindow(QtWidgets.QMainWindow):
             cmd["dx"] = dx
             cmd["freq"] = float(int(freq) / 1000)
             cmd["comment"] = comment
+            self.send_n1mm_spot(
+                dx,
+                cmd["freq"],
+                self.station.get("Call", ""),
+                comment,
+                mode=self.current_mode,
+            )
             if self.bandmap_window:
                 self.bandmap_window.msg_from_main(cmd)
+
+    def send_n1mm_spot(
+        self, dx: str, freq: float, spotter: str, comment: str, ts="", mode=""
+    ) -> None:
+        """Send an N1MM spot packet. freq is in kHz."""
+        if not self.n1mm or not self.n1mm.send_spot_packets or not dx:
+            return
+        try:
+            freq = float(freq)
+        except (TypeError, ValueError):
+            return
+        if not mode:
+            # Cluster spots have no mode field. Find the mode in the comment.
+            for word in comment.upper().split():
+                if word in SPOT_MODES:
+                    mode = word
+                    break
+        if not ts:
+            ts = datetime.datetime.now(tz=datetime.UTC).isoformat(" ")[:19]
+        self.n1mm.spot_info["dxcall"] = dx
+        self.n1mm.spot_info["frequency"] = f"{freq:.1f}"
+        self.n1mm.spot_info["spottercall"] = spotter
+        self.n1mm.spot_info["comment"] = comment
+        self.n1mm.spot_info["action"] = "add"
+        self.n1mm.spot_info["mode"] = mode
+        self.n1mm.spot_info["timestamp"] = ts
+        self.n1mm.send_spot()
 
     def spot_dx(self) -> None:
         """Build a SPOTDX command and send it to the cluster window."""
@@ -4029,6 +4073,7 @@ class MainWindow(QtWidgets.QMainWindow):
                     self.pref.get("n1mm_contactport", "127.0.0.1:12061"),
                     self.pref.get("n1mm_lookupport", "127.0.0.1:12060"),
                     self.pref.get("n1mm_scoreport", "127.0.0.1:12060"),
+                    self.pref.get("n1mm_spotport", "127.0.0.1:12060"),
                 )
             except ValueError:
                 logger.warning("%s", f"{ValueError}")
@@ -4036,7 +4081,9 @@ class MainWindow(QtWidgets.QMainWindow):
             self.n1mm.send_contact_packets = self.pref.get("send_n1mm_contact", False)
             self.n1mm.send_lookup_packets = self.pref.get("send_n1mm_lookup", False)
             self.n1mm.send_score_packets = self.pref.get("send_n1mm_score", False)
+            self.n1mm.send_spot_packets = self.pref.get("send_n1mm_spot", False)
             self.n1mm.radio_info["StationName"] = self.pref.get("n1mm_station_name", "")
+            self.n1mm.spot_info["StationName"] = self.pref.get("n1mm_station_name", "")
 
         if self.pref.get("useserver", False):
             self.server_channel = Multicast(

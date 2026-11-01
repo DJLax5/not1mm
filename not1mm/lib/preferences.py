@@ -50,6 +50,8 @@ class Preferences:
         "n1mm_contactport": "127.0.0.1:12060",
         "n1mm_lookupport": "127.0.0.1:12060",
         "n1mm_scoreport": "127.0.0.1:12060",
+        "send_n1mm_spot": False,
+        "n1mm_spotport": "127.0.0.1:12060",
         "usehamdb": False,
         "usehamqth": False,
         "cloudlog": False,
