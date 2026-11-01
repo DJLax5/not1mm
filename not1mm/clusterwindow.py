@@ -11,7 +11,7 @@ import re
 from datetime import UTC, datetime
 
 from PyQt6 import QtGui, QtNetwork
-from PyQt6.QtCore import pyqtSignal
+from PyQt6.QtCore import QTimer, pyqtSignal
 from PyQt6.QtWidgets import QDockWidget
 
 from not1mm import fsutils
@@ -47,6 +47,12 @@ class ClusterWindow(QDockWidget):
 
         # wire up the socket
         self.connected = False
+        self.rx_text = ""
+        self.logged_in = False
+        # Wait a short time after HELLO. The software name can come later.
+        self.login_timer = QTimer()
+        self.login_timer.setSingleShot(True)
+        self.login_timer.timeout.connect(self.send_post_login_commands)
         self.socket = QtNetwork.QTcpSocket()
         self.test_for_data = self.socket.bytesAvailable
         self.socket.readyRead.connect(self.cluster_receive)
@@ -82,6 +88,9 @@ class ClusterWindow(QDockWidget):
         logger.info(f"connecting to dx cluster {server} {port}")
         self.socket.connectToHost(server, port)
         self.test_for_data = self.socket.bytesAvailable
+        self.rx_text = ""
+        self.logged_in = False
+        self.login_timer.stop()
         self.setWindowTitle(f"Cluster: {server}")
         time = datetime.now(UTC).strftime("%H:%M")
         self.append_message(f"[{time}] Connecting.")
@@ -99,6 +108,7 @@ class ClusterWindow(QDockWidget):
     def cluster_disconnected(self) -> None:
         """Called when socket is disconnected."""
         self.connected = False
+        self.login_timer.stop()
         self.setWindowTitle("Cluster")
         time = datetime.now(UTC).strftime("%H:%M")
         self.append_message(f"[{time}] Disconnected.")
@@ -128,6 +138,11 @@ class ClusterWindow(QDockWidget):
             except UnicodeDecodeError:
                 continue
 
+            # Keep the text before the login is acknowledged.
+            # Lines can arrive in parts, thus join the parts without a gap.
+            if not self.logged_in:
+                self.rx_text = (self.rx_text + data)[-4096:]
+
             logger.debug(f"< {data}")
             self.append_message(data)
 
@@ -144,16 +159,16 @@ class ClusterWindow(QDockWidget):
             if "password:" in data.lower():
                 self.cluster_send(self.pref.get("cluster_password", ""))
 
-            if "HELLO" in data.upper():
-                self.test_for_data = self.socket.canReadLine
-                self.connectButton.setText("Connected")
-                self.cluster_send(self.pref.get("cluster_filter", ""))
-                self.cluster_send("set dx extension Section")
-                self.cluster_send(
-                    "set dx mode " + self.pref.get("cluster_mode", "OPEN")
-                )
-                self.cluster_send("sh wwv 1")
-                logger.debug(f"callsign login acknowledged {data}")
+            if not self.logged_in and "HELLO" in self.rx_text.upper():
+                if not self.login_timer.isActive():
+                    self.test_for_data = self.socket.canReadLine
+                    self.connectButton.setText("Connected")
+                    self.login_timer.start(2000)
+                    logger.debug(f"callsign login acknowledged {data}")
+                # Send the commands now if the software name is known.
+                if self.detect_software() != "cc":
+                    self.login_timer.stop()
+                    self.send_post_login_commands()
 
             if "BEACON" in data:
                 pass
@@ -180,7 +195,7 @@ class ClusterWindow(QDockWidget):
 
             # wwv data
             if match := re.search(
-                r"(\d{2}-\w{3}-\d{4})\s+(\d+)\s+(\d+)\s+(\d+)\s+(\d+)\s+(.*?)\s+<(\w+)>",
+                r"(\d{1,2}-\w{3}-\d{4})\s+(\d+)\s+(\d+)\s+(\d+)\s+(\d+)\s+(.*?)\s+<([^>]+)>",
                 data,
             ):
                 cmd = {}
@@ -193,6 +208,29 @@ class ClusterWindow(QDockWidget):
                 cmd["conditions"] = match.group(6).strip()
                 cmd["source"] = match.group(7)
                 self.message.emit(cmd)
+
+    def detect_software(self) -> str:
+        """Return the name of the cluster software. The fallback is "cc"."""
+        text = self.rx_text.lower()
+        for software, keywords in self.pref.get("cluster_detect", {}).items():
+            if any(keyword.lower() in text for keyword in keywords):
+                return software
+        return "cc"
+
+    def send_post_login_commands(self) -> None:
+        """Send the commands for the detected cluster software."""
+        if self.logged_in:
+            return
+        self.logged_in = True
+        software = self.detect_software()
+        logger.debug(f"cluster software {software}")
+        commands = self.pref.get("cluster_commands", {})
+        for command in commands.get(software, commands.get("cc", [])):
+            command = command.replace(
+                "{filter}", self.pref.get("cluster_filter", "")
+            ).replace("{mode}", self.pref.get("cluster_mode", "OPEN"))
+            if command.strip():
+                self.cluster_send(command)
 
     def input_to_cluster(self):
         data = self.clusterInput.text()
