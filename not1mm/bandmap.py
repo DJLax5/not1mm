@@ -489,6 +489,10 @@ class BandMapWindow(QDockWidget):
             self.message.emit({"cmd": "SPOTNEAR", "call": ""})
         self.request_workedlist()
 
+    def is_dupe(self, call: str) -> bool:
+        """Return True if the call is worked on the current band."""
+        return self.currentBand.band_mhz in self.worked_list.get(call, [])
+
     def send_spot_near(self, mode: str) -> None:
         """Send the call of the spot in the RX passband to the main window."""
         if not self.rx_freq:
@@ -532,6 +536,11 @@ class BandMapWindow(QDockWidget):
             return
         if packet.get("cmd", "") == "NEXTSPOT" and self.rx_freq:
             spot = self.spots.get_next_spot(self.rx_freq + 0.001, self.currentBand.end)
+            # Skip the dupes.
+            while spot and self.is_dupe(spot.get("callsign")):
+                spot = self.spots.get_next_spot(
+                    spot.get("freq") + 0.001, self.currentBand.end
+                )
             if spot:
                 cmd = {}
                 cmd["cmd"] = "TUNE"
@@ -543,6 +552,11 @@ class BandMapWindow(QDockWidget):
             spot = self.spots.get_prev_spot(
                 self.rx_freq - 0.001, self.currentBand.start
             )
+            # Skip the dupes.
+            while spot and self.is_dupe(spot.get("callsign")):
+                spot = self.spots.get_prev_spot(
+                    spot.get("freq") - 0.001, self.currentBand.start
+                )
             if spot:
                 cmd = {}
                 cmd["cmd"] = "TUNE"
@@ -837,10 +851,8 @@ class BandMapWindow(QDockWidget):
                         pen_color = self.dark_marked_color
                     else:
                         pen_color = self.light_marked_color
-                if items.get("callsign") in self.worked_list:
-                    call_bandlist = self.worked_list.get(items.get("callsign"))
-                    if self.currentBand.band_mhz in call_bandlist:
-                        pen_color = self.worked_color
+                if self.is_dupe(items.get("callsign")):
+                    pen_color = self.worked_color
                 freq_y = (
                     (items.get("freq") - self.currentBand.start) / step
                 ) * PIXELSPERSTEP
