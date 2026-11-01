@@ -308,11 +308,17 @@ class MainWindow(QtWidgets.QMainWindow):
         self.server_message_watch_timer.timeout.connect(self.check_udp_queue)
         self.server_message_watch_timer.start(1000)
         self.utc_clock = QtWidgets.QLabel()
-        self.utc_clock.setFont(QFont(self.fontfamily, 14))
-        self.utc_clock.setAlignment(
-            Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignTop
-        )
-        self.horizontalLayout.addWidget(self.utc_clock)
+        self.utc_clock.setFont(QFont(self.fontfamily, 11))
+        self.utc_clock.setContentsMargins(0, 0, 6, 0)
+        # macOS shows the menu bar outside the window. Put the clock in the
+        # entry row there. Other systems show it in the menu bar corner.
+        if sys.platform == "darwin":
+            self.utc_clock.setAlignment(
+                Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignTop
+            )
+            self.horizontalLayout.addWidget(self.utc_clock)
+        else:
+            self.menuBar().setCornerWidget(self.utc_clock, Qt.Corner.TopRightCorner)
         self.utc_clock_timer = QtCore.QTimer()
         self.utc_clock_timer.setSingleShot(True)
         self.utc_clock_timer.setTimerType(Qt.TimerType.PreciseTimer)
