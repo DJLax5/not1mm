@@ -69,6 +69,10 @@ class Settings(QtWidgets.QDialog):
 
         self.edit_rst.setChecked(bool(self.preference.get("edit_rst", False)))
 
+        self.show_utc_clock.setChecked(
+            bool(self.preference.get("show_utc_clock", True))
+        )
+
         self.use_esm.setChecked(bool(self.preference.get("use_esm", False)))
 
         value = self.preference.get("esm_agn", "DISABLED")
@@ -290,6 +294,8 @@ class Settings(QtWidgets.QDialog):
         self.preference["sandpqsy"] = self.qsy_on_change.isChecked()
 
         self.preference["edit_rst"] = self.edit_rst.isChecked()
+
+        self.preference["show_utc_clock"] = self.show_utc_clock.isChecked()
 
         self.preference["use_esm"] = self.use_esm.isChecked()
         self.preference["esm_cq"] = self.esm_cq.currentText()
