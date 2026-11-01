@@ -165,6 +165,8 @@ class MainWindow(QtWidgets.QMainWindow):
     # the QRZ/TU macro. See process_esm() in the contest plugins.
     esm_call_sent = ""
     sandpfreq = 0
+    # The radio poll can read cq_freq before __init__ sets it.
+    cq_freq = None
     current_sn = None
     # Starts false and is set true when runtime output-device checks succeed.
     voice_output_available = False
