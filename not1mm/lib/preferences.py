@@ -78,7 +78,6 @@ class Preferences:
         "statisticswindow": False,
         "darkmode": True,
         "language": "en_US",
-        "show_utc_clock": True,
     }
 
     @classmethod

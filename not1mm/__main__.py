@@ -3852,8 +3852,6 @@ class MainWindow(QtWidgets.QMainWindow):
 
         logger.debug("apply_preferences")
 
-        self.utc_clock.setVisible(self.pref.get("show_utc_clock", True))
-
         # open database as the first thing we do so other threads can use it
         self.dbname = fsutils.USER_DATA_PATH / self.pref.get(
             "current_database", "ham.db"
