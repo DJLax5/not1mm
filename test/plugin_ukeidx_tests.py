@@ -1,6 +1,5 @@
 """Tests for the Cabrillo export of QSOs without an exchange."""
 
-from pathlib import Path
 from unittest.mock import MagicMock
 
 import pytest
@@ -15,7 +14,11 @@ from not1mm.plugins import rsgb_iota, ukeidx
 def test_cabrillo_empty_exchange_logs_zero(
     plugin, empty_exchange, tmp_path, monkeypatch
 ):
-    monkeypatch.setattr(Path, "home", lambda: tmp_path)
+    monkeypatch.setattr(
+        plugin,
+        "get_export_filename",
+        lambda self, name, file_filter: str(tmp_path / name),
+    )
     ctx = MagicMock()
     ctx.station = {"Call": "DM7HB"}
     ctx.contest_settings = {}
