@@ -2771,7 +2771,8 @@ class MainWindow(QtWidgets.QMainWindow):
             ts = datetime.datetime.now(tz=datetime.UTC).isoformat(" ")[:19]
         self.n1mm.spot_info["dxcall"] = dx
         self.n1mm.spot_info["frequency"] = f"{freq:.1f}"
-        self.n1mm.spot_info["spottercall"] = spotter
+        # The cluster gives the spotter as "CALL:". Remove the colon.
+        self.n1mm.spot_info["spottercall"] = spotter.rstrip(":")
         self.n1mm.spot_info["comment"] = comment
         self.n1mm.spot_info["action"] = "add"
         self.n1mm.spot_info["mode"] = mode
