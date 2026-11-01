@@ -50,7 +50,9 @@ class ClusterWindow(QDockWidget):
         self.rx_text = ""
         self.logged_in = False
         # Wait a short time after HELLO. The software name can come later.
-        self.login_timer = QTimer()
+        # The window owns the timer. Then it stays alive while the socket
+        # can still send disconnected at shutdown.
+        self.login_timer = QTimer(self)
         self.login_timer.setSingleShot(True)
         self.login_timer.timeout.connect(self.send_post_login_commands)
         self.socket = QtNetwork.QTcpSocket()
