@@ -4461,7 +4461,8 @@ class MainWindow(QtWidgets.QMainWindow):
 
         if " " in text:
             if not stripped_text and self.grab_spot():
-                return
+                # Continue as if the operator typed the call and pushed space.
+                stripped_text = self.callsign.text()
             if stripped_text in ["CW", "RTTY", "SSB", "FM", "AM", "LSB", "USB"]:
                 self.change_mode(stripped_text)
                 return
@@ -4529,7 +4530,8 @@ class MainWindow(QtWidgets.QMainWindow):
         bool
         True if the call was put in the field.
         """
-        if self.spot_near and not self.callsign.text():
+        # Do not take the CQ marker as a call.
+        if self.spot_near and self.spot_near != "CQ" and not self.callsign.text():
             cmd = {}
             cmd["cmd"] = "CHANGECALL"
             cmd["call"] = self.spot_near
