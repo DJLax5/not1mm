@@ -446,7 +446,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
         self.F1.setContextMenuPolicy(QtCore.Qt.ContextMenuPolicy.CustomContextMenu)
         self.F1.customContextMenuRequested.connect(lambda x: self.edit_macro(self.F1))
-        self.F1.clicked.connect(lambda x: self.process_function_key(self.F1))
+        self.F1.clicked.connect(lambda x: self.process_f1())
         self.F2.setContextMenuPolicy(QtCore.Qt.ContextMenuPolicy.CustomContextMenu)
         self.F2.customContextMenuRequested.connect(lambda x: self.edit_macro(self.F2))
         self.F2.clicked.connect(lambda x: self.process_function_key(self.F2))
@@ -2757,14 +2757,21 @@ class MainWindow(QtWidgets.QMainWindow):
         Mark CQ frequency in bandmap. Remember the last frequency so we don't re-add a new spot every few seconds.
         """
         freq = self.radio_state.get("vfoa")
-        if freq and freq != self.cq_freq and self.bandmap_window:
+        if not freq or int(freq) == self.cq_freq:
+            return
+        self.cq_freq = int(freq)
+        if self.bandmap_window:
             cmd = {}
             cmd["cmd"] = "MARKDX"
             cmd["dx"] = "CQ"
-            cmd["freq"] = float(int(freq) / 1000)
+            cmd["freq"] = float(self.cq_freq / 1000)
             cmd["comment"] = f"CQ {self.current_mode} MARKED"
             self.bandmap_window.msg_from_main(cmd)
-            self.cq_freq = freq
+
+    def process_f1(self) -> None:
+        """Send the F1 macro and mark the CQ frequency."""
+        self.process_function_key(self.F1)
+        self.mark_cq()
 
     def mark_spot(self, comment="") -> None:
         """Send a command to the bandmap window to mark the current call."""
@@ -2972,8 +2979,7 @@ class MainWindow(QtWidgets.QMainWindow):
                 self.auto_cq_time = datetime.datetime.now(
                     tz=datetime.UTC
                 ) + datetime.timedelta(milliseconds=self.auto_cq_delay)
-            self.process_function_key(self.F1)
-            self.mark_cq()
+            self.process_f1()
             return
         if event.key() == Qt.Key.Key_F2:
             self.process_function_key(self.F2)
@@ -3860,6 +3866,8 @@ class MainWindow(QtWidgets.QMainWindow):
         None
         """
         self.pref["run_state"] = self.radioButton_run.isChecked()
+        if self.pref["run_state"]:
+            self.mark_cq()
         Preferences.save()
         self.read_macros()
         self.check_esm()
@@ -4840,6 +4848,13 @@ class MainWindow(QtWidgets.QMainWindow):
                 and max(int(vfo), self.sandpfreq) - min(int(vfo), self.sandpfreq) > 500
             ):
                 self.clearinputs()
+            if (
+                self.pref.get("run_to_sp_on_qsy", False) is True
+                and self.radioButton_run.isChecked()
+                and self.cq_freq
+                and abs(int(vfo) - self.cq_freq) > 500
+            ):
+                self.set_running(False)
         band = getband(str(vfo))
         self.radio_state["band"] = band
         self.contact["Band"] = get_logged_band(str(vfo))
