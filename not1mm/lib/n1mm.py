@@ -12,6 +12,9 @@ from dicttoxml import dicttoxml
 
 logger = logging.getLogger("n1mmlib")
 
+# Mode names that can occur in a cluster spot comment.
+SPOT_MODES = ("CW", "SSB", "USB", "LSB", "AM", "FM", "RTTY", "PSK31", "FT8", "FT4")
+
 if __name__ == "__main__":
     print("I'm not the program you are looking for.")
 
@@ -117,12 +120,27 @@ class N1MM:
         "timestamp": "",
     }
 
+    spot_info = {  # noqa: RUF012
+        "app": "NOT1MM",
+        "StationName": "",
+        "dxcall": "",
+        "frequency": "",
+        "spottercall": "",
+        "comment": "",
+        "action": "add",
+        "mode": "",
+        "status": "",
+        "statuslist": "",
+        "timestamp": "",
+    }
+
     def __init__(
         self,
         radioport="127.0.0.1:12060",
         contactport="127.0.0.1:12060",
         lookupport="127.0.0.1:12060",
         scoreport="127.0.0.1:12060",
+        spotport="127.0.0.1:12060",
     ):
         """
         Initialize the N1MM interface.
@@ -133,15 +151,18 @@ class N1MM:
         - contactport, Where Add, Update, Delete messages go.
         - lookupport, Where callsign queries go.
         - scoreport, Where to send scores to.
+        - spotport, Where cluster spot messages go.
         """
         self.radio_port = radioport
         self.contact_port = contactport
         self.lookup_port = lookupport
         self.score_port = scoreport
+        self.spot_port = spotport
         self.send_radio_packets = False
         self.send_contact_packets = False
         self.send_lookup_packets = False
         self.send_score_packets = False
+        self.send_spot_packets = False
         self.contact_info["NetBiosName"] = socket.gethostname()
 
     def set_station_name(self, name):
@@ -149,6 +170,7 @@ class N1MM:
         self.radio_info["StationName"] = name
         self.contact_info["StationName"] = name
         self.contactdelete["StationName"] = name
+        self.spot_info["StationName"] = name
 
     def set_operator(self, name):
         """Set Operators Name"""
@@ -181,6 +203,10 @@ class N1MM:
     def send_realtime_score(self):
         """Send score"""
         self._send(self.score_port, self.score_report, "dynamicresults")
+
+    def send_spot(self):
+        """Send spot"""
+        self._send(self.spot_port, self.spot_info, "spot")
 
     def _send(self, port_list, payload, package_name):
         """Send XML data"""
@@ -220,3 +246,5 @@ class N1MM:
                 logger.critical("%s", f"{exception}")
             except socket.gaierror as exception:
                 logger.critical("%s", f"{exception}")
+            except OSError as exception:
+                logger.warning("%s", f"{exception}")

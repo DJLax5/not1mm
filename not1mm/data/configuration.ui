@@ -2016,6 +2016,70 @@
          </property>
         </widget>
        </item>
+       <item row="8" column="0">
+        <widget class="QLabel" name="label_n1mm_spots">
+         <property name="font">
+          <font>
+           <family>JetBrains Mono</family>
+           
+           <pointsize>12</pointsize>
+           <strikeout>false</strikeout>
+          </font>
+         </property>
+         <property name="text">
+          <string>Spots:</string>
+         </property>
+         <property name="alignment">
+          <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+         </property>
+        </widget>
+       </item>
+       <item row="8" column="1">
+        <widget class="QCheckBox" name="send_n1mm_spot">
+         <property name="maximumSize">
+          <size>
+           <width>22</width>
+           <height>16777215</height>
+          </size>
+         </property>
+         <property name="accessibleName">
+          <string>send spot packets</string>
+         </property>
+         <property name="accessibleDescription">
+          <string>send n 1 m m spot packets.</string>
+         </property>
+         <property name="text">
+          <string/>
+         </property>
+        </widget>
+       </item>
+       <item row="8" column="2" colspan="4">
+        <widget class="QLineEdit" name="n1mm_spotport">
+         <property name="font">
+          <font>
+           <family>JetBrains Mono</family>
+           
+           <pointsize>12</pointsize>
+           <strikeout>false</strikeout>
+          </font>
+         </property>
+         <property name="accessibleName">
+          <string>spot packet address and port</string>
+         </property>
+         <property name="accessibleDescription">
+          <string>spot packet address and port</string>
+         </property>
+         <property name="inputMethodHints">
+          <set>Qt::InputMethodHint::ImhDigitsOnly</set>
+         </property>
+         <property name="text">
+          <string/>
+         </property>
+         <property name="placeholderText">
+          <string/>
+         </property>
+        </widget>
+       </item>
       </layout>
      </widget>
      <widget class="QWidget" name="bands_tab">
@@ -2955,6 +3019,7 @@
   <tabstop>n1mm_radioport</tabstop>
   <tabstop>n1mm_lookupport</tabstop>
   <tabstop>n1mm_scoreport</tabstop>
+  <tabstop>n1mm_spotport</tabstop>
  </tabstops>
  <resources/>
  <connections>
