@@ -3879,7 +3879,7 @@ class MainWindow(QtWidgets.QMainWindow):
         """
 
         logger.debug("Function Key: %s", function_key.text())
-        if function_key is self.F1:
+        if function_key is self.F1 and self.pref["run_state"]:
             self.mark_cq()
         if self._is_phone_mode():
             self.voice_output_available = has_output_device(
@@ -3948,8 +3948,6 @@ class MainWindow(QtWidgets.QMainWindow):
         None
         """
         self.pref["run_state"] = self.radioButton_run.isChecked()
-        if self.pref["run_state"]:
-            self.mark_cq()
         Preferences.save()
         self.read_macros()
         self.check_esm()
