@@ -20,7 +20,7 @@ def test_cabrillo_empty_exchange_logs_zero(
         lambda self, name, file_filter: str(tmp_path / name),
     )
     ctx = MagicMock()
-    ctx.station = {"Call": "DM7HB"}
+    ctx.station = {"Call": "DL1ABC"}
     ctx.contest_settings = {}
     ctx.database.get_ops.return_value = []
     ctx.database.fetch_all_contacts_asc.return_value = [
@@ -28,7 +28,7 @@ def test_cabrillo_empty_exchange_logs_zero(
             "TS": "2026-01-24 12:00:00",
             "Mode": "CW",
             "Freq": 14025.0,
-            "StationPrefix": "DM7HB",
+            "StationPrefix": "DL1ABC",
             "SNT": "599",
             "SentNr": "",
             "Call": "G4ABC",
