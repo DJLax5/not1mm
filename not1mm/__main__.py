@@ -76,7 +76,7 @@ from not1mm.chat import ChatWindow
 from not1mm.checkwindow import CheckWindow
 from not1mm.clusterwindow import ClusterWindow
 from not1mm.dxcc_tracker import DXCCWindow
-from not1mm.lib import catppuccin
+from not1mm.lib import catppuccin, plugin_common
 from not1mm.lib.about import About
 from not1mm.lib.cwinterface import CW
 from not1mm.lib.database import DataBase
@@ -1764,8 +1764,6 @@ class MainWindow(QtWidgets.QMainWindow):
         band_memory[vfo_name] = {**memory, key: int(vfo)}
         self.pref["band_memory"] = band_memory
         self.band_memory_key[vfo_name] = key
-        if key != last_key:
-            Preferences.save()
 
     def _shutdown(self) -> None:
         """Common cleanup for quit_app and closeEvent."""
@@ -5267,8 +5265,7 @@ class MainWindow(QtWidgets.QMainWindow):
         """
 
         logger.debug("******EDI*****")
-        if hasattr(self.contest, "edi"):
-            self.contest.edi(self)
+        plugin_common.generate_edi(self)
 
     def generate_cabrillo(self, file_encoding: str) -> None:
         """
@@ -5284,14 +5281,7 @@ class MainWindow(QtWidgets.QMainWindow):
         """
 
         logger.debug("******Cabrillo*****")
-        if self.contest is None:
-            self.show_message_box("You have no contest defined.")
-            return
-        try:
-            self.contest.cabrillo(self, file_encoding)
-        except Exception as exception:
-            logger.exception("cabrillo: export failed")
-            self.show_message_box(f"Error saving Cabrillo: {exception}")
+        plugin_common.generate_cabrillo(self, file_encoding)
 
     def import_adif(self) -> None:
         """
@@ -5308,7 +5298,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
         # https://www.adif.org/315/ADIF_315.htm
         logger.debug("******ADIF IMPORT*****")
-        self.contest.imp_adif(self)
+        plugin_common.import_adif(self)
 
     def load_fonts_from_dir(self, directory: str) -> str:
         """
