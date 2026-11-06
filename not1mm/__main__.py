@@ -167,6 +167,8 @@ class MainWindow(QtWidgets.QMainWindow):
     sandpfreq = 0
     # The radio poll can read cq_freq before __init__ sets it.
     cq_freq = None
+    # Call of the bandmap spot near the VFO, space on empty callsign takes it.
+    spot_near = ""
     current_sn = None
     # Starts false and is set true when runtime output-device checks succeed.
     voice_output_available = False
@@ -179,7 +181,6 @@ class MainWindow(QtWidgets.QMainWindow):
     log_window = None
     check_window = None
     bandmap_window = None
-    spot_near = ""
     cluster_window = None
     vfo_window = None
     rate_window = None
@@ -410,7 +411,6 @@ class MainWindow(QtWidgets.QMainWindow):
         self.radioButton_sp.clicked.connect(self.run_sp_buttons_clicked)
         self.score.setText("0")
         self.callsign.textEdited.connect(self.callsign_changed)
-        self.callsign_placeholder = self.callsign.placeholderText()
         self.callsign.returnPressed.connect(self.check_esm_with_enter)
         self.callsign.cursorPositionChanged.connect(self.check_esm)
         self.callsign.installEventFilter(self)
@@ -1427,11 +1427,10 @@ class MainWindow(QtWidgets.QMainWindow):
                 return
 
             if msg.get("cmd", "") == "SPOTNEAR":
-                # Show the call of the spot near the VFO as a gray hint.
+                # Show the spot near the VFO as gray hint, a dupe with "~".
                 self.spot_near = msg.get("call", "")
-                self.callsign.setPlaceholderText(
-                    self.spot_near or self.callsign_placeholder
-                )
+                hint = "~" + self.spot_near if msg.get("dupe") else self.spot_near
+                self.callsign.setPlaceholderText(hint)
                 return
 
             if msg.get("cmd", "") == "CHANGECALL":

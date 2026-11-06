@@ -71,6 +71,7 @@ def PREV_SPOT(self) -> None:
     """Jump to the previous spot in the bandmap. Skip the dupes."""
     cmd = {}
     cmd["cmd"] = "PREVSPOT"
+    cmd["call"] = self.callsign.text()
     if self.bandmap_window:
         self.bandmap_window.msg_from_main(cmd)
 
@@ -79,13 +80,9 @@ def NEXT_SPOT(self) -> None:
     """Jump to the next spot in the bandmap. Skip the dupes."""
     cmd = {}
     cmd["cmd"] = "NEXTSPOT"
+    cmd["call"] = self.callsign.text()
     if self.bandmap_window:
         self.bandmap_window.msg_from_main(cmd)
-
-
-def GRAB_SPOT(self) -> None:
-    """Put the call of the spot near the VFO in the empty callsign field"""
-    self.grab_spot()
 
 
 def FIND_DX(self) -> None:
