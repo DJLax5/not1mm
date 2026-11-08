@@ -14,11 +14,6 @@ from not1mm.plugins import rsgb_iota, ukeidx
 def test_cabrillo_empty_exchange_logs_zero(
     plugin, empty_exchange, tmp_path, monkeypatch
 ):
-    monkeypatch.setattr(
-        plugin,
-        "get_export_filename",
-        lambda self, name, file_filter: str(tmp_path / name),
-    )
     ctx = MagicMock()
     ctx.station = {"Call": "DL1ABC"}
     ctx.contest_settings = {}
@@ -36,7 +31,7 @@ def test_cabrillo_empty_exchange_logs_zero(
             "NR": "",
         }
     ]
-    plugin.cabrillo(ctx, "ascii")
+    plugin.cabrillo(ctx, str(tmp_path / "test.log"), "ascii")
     assert "Cabrillo saved" in ctx.show_message_box.call_args[0][0]
     [logfile] = tmp_path.glob("*.log")
     qso = [x for x in logfile.read_text().splitlines() if x.startswith("QSO:")]

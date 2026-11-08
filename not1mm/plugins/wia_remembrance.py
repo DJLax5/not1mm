@@ -10,13 +10,7 @@ import logging
 from PyQt6 import QtWidgets
 
 from not1mm.lib.ham_utility import band_mhz_of
-from not1mm.lib.plugin_common import (
-    contest_time,
-    gen_adif,
-    get_points,
-    imp_adif,
-    get_export_filename,
-)
+from not1mm.lib.plugin_common import contest_time, gen_adif, get_points, imp_adif
 from not1mm.lib.version import __version__
 
 logger = logging.getLogger(__name__)
@@ -157,21 +151,12 @@ def output_cabrillo_line(line_to_output, ending, file_descriptor, file_encoding)
     )
 
 
-def cabrillo(self, file_encoding):
+def cabrillo(self, filename, file_encoding):
     """Generates Cabrillo file. Maybe."""
     # https://www.cqwpx.com/cabrillo.htm
     logger.debug("******Cabrillo*****")
     logger.debug("Station: %s", f"{self.station}")
     logger.debug("Contest: %s", f"{self.contest_settings}")
-    now = datetime.datetime.now(datetime.UTC)
-    date_time = now.strftime("%Y-%m-%d_%H-%M-%S")
-    filename = get_export_filename(
-        self,
-        f"{self.station.get('Call', '').upper().replace('/', '-')}_{cabrillo_name}_{date_time}.log",
-        "Cabrillo (*.log)",
-    )
-    if not filename:
-        return
     logger.debug("%s", filename)
     log = self.database.fetch_all_contacts_asc()
     try:

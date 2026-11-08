@@ -29,19 +29,12 @@
 #  	Cabrillo name:	RSGB-COMMONWEALTH
 #  	Cabrillo name aliases:	RSGB-BERU
 
-import datetime
 import logging
 import re
 
 from PyQt6 import QtWidgets
 
-from not1mm.lib.plugin_common import (
-    gen_adif,
-    get_points,
-    imp_adif,
-    online_score_xml,
-    get_export_filename,
-)
+from not1mm.lib.plugin_common import gen_adif, get_points, imp_adif, online_score_xml
 from not1mm.lib.version import __version__
 
 assert imp_adif, online_score_xml
@@ -567,21 +560,12 @@ def output_cabrillo_line(line_to_output, ending, file_descriptor, file_encoding)
     )
 
 
-def cabrillo(self, file_encoding):
+def cabrillo(self, filename, file_encoding):
     """Generates Cabrillo file. Maybe."""
     # https://www.rsgbcc.org/hf/rules/Cabrillo/Cabrillo-Information.shtml
     logger.debug("******Cabrillo*****")
     logger.debug("Station: %s", f"{self.station}")
     logger.debug("Contest: %s", f"{self.contest_settings}")
-    now = datetime.datetime.now().astimezone()
-    date_time = now.strftime("%Y-%m-%d_%H-%M-%S")
-    filename = get_export_filename(
-        self,
-        f"{self.station.get('Call', '').upper().replace('/', '-')}_{cabrillo_name}_{date_time}.log",
-        "Cabrillo (*.log)",
-    )
-    if not filename:
-        return
     logger.debug("%s", filename)
     log = self.database.fetch_all_contacts_asc()
     try:

@@ -90,29 +90,6 @@ def get_points(self):
     return 0
 
 
-def get_export_filename(self, default_name: str, file_filter: str) -> str | None:
-    """
-    Show a save dialog for a log export file.
-    The dialog starts in the directory of the last export.
-    If this directory does not exist, the dialog starts in the home directory.
-    Returns the selected path, or None if the user cancels.
-    """
-    export_dir = self.pref.get("export_dir", "")
-    if not export_dir or not Path(export_dir).is_dir():
-        export_dir = str(Path.home())
-    filename, _ = QFileDialog.getSaveFileName(
-        self,
-        "Save Log File",
-        str(Path(export_dir) / default_name),
-        file_filter,
-    )
-    if not filename:
-        return None
-    self.pref["export_dir"] = str(Path(filename).parent)
-    Preferences.save()
-    return filename
-
-
 def contest_time(self):
     """The time a windowed dupe rule should count from.
 
@@ -128,6 +105,26 @@ def contest_time(self):
         except ValueError:
             logger.warning("contest_time: cannot parse a timestamp %r", stamp)
     return datetime.datetime.now(datetime.UTC).replace(tzinfo=None)
+
+
+def get_export_filename(self, default_name: str, file_filter: str) -> str | None:
+    """
+    Show a save dialog for a log export file.
+    The dialog starts in the directory of the last export, or in the home
+    directory if that does not exist.
+    Returns the selected path, or None if the user cancels.
+    """
+    export_dir = self.pref.get("export_dir", "")
+    if not export_dir or not Path(export_dir).is_dir():
+        export_dir = str(Path.home())
+    filename, _ = QFileDialog.getSaveFileName(
+        self, "Save Log File", str(Path(export_dir) / default_name), file_filter
+    )
+    if not filename:
+        return None
+    self.pref["export_dir"] = str(Path(filename).parent)
+    Preferences.save()
+    return filename
 
 
 def gen_adif(self, cabrillo_name: str, contest_id=""):
@@ -1070,8 +1067,17 @@ def generate_cabrillo(mainwindow, file_encoding: str) -> None:
     if mainwindow.contest is None:
         mainwindow.show_message_box("You have no contest defined.")
         return
+    date_time = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+    call = mainwindow.station.get("Call", "").upper().replace("/", "-")
+    filename = get_export_filename(
+        mainwindow,
+        f"{call}_{mainwindow.contest.cabrillo_name}_{date_time}.log",
+        "Cabrillo (*.log)",
+    )
+    if not filename:
+        return
     try:
-        mainwindow.contest.cabrillo(mainwindow, file_encoding)
+        mainwindow.contest.cabrillo(mainwindow, filename, file_encoding)
     except Exception as exception:  # noqa: BLE001
         logger.exception("cabrillo: export failed")
         mainwindow.show_message_box(f"Error saving Cabrillo: {exception}")

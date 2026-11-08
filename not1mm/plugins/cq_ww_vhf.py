@@ -20,13 +20,12 @@
 #   Find rules at: https://cqww-vhf.com/rules/
 #   Cabrillo name: CQ-VHF-SSBCW / CQ-VHF-DIGI
 
-import datetime
 import logging
 
 from PyQt6 import QtWidgets
 
 from not1mm.lib.ham_utility import get_logged_band
-from not1mm.lib.plugin_common import gen_adif, get_points, get_export_filename
+from not1mm.lib.plugin_common import gen_adif, get_points
 from not1mm.lib.version import __version__
 
 logger = logging.getLogger(__name__)
@@ -279,21 +278,12 @@ def output_cabrillo_line(line_to_output, ending, file_descriptor, file_encoding)
     )
 
 
-def cabrillo(self, file_encoding):
+def cabrillo(self, filename, file_encoding):
     """Generates Cabrillo file. Maybe."""
     # https://cqww-vhf.com/cabrillo.htm
     logger.debug("******Cabrillo*****")
     logger.debug("Station: %s", f"{self.station}")
     logger.debug("Contest: %s", f"{self.contest_settings}")
-    now = datetime.datetime.now().astimezone()
-    date_time = now.strftime("%Y-%m-%d_%H-%M-%S")
-    filename = get_export_filename(
-        self,
-        f"{self.station.get('Call', '').upper().replace('/', '-')}_{cabrillo_name}_{date_time}.log",
-        "Cabrillo (*.log)",
-    )
-    if not filename:
-        return
     logger.debug("%s", filename)
     log = self.database.fetch_all_contacts_asc()
     try:

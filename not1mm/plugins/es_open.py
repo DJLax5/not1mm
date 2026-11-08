@@ -8,15 +8,10 @@ from datetime import datetime
 from datetime import timedelta
 
 
+
 from PyQt6 import QtWidgets
 
-from not1mm.lib.plugin_common import (
-    gen_adif,
-    imp_adif,
-    get_points,
-    contest_time,
-    get_export_filename,
-)
+from not1mm.lib.plugin_common import gen_adif, imp_adif, get_points, contest_time
 
 from not1mm.lib.ham_utility import calculate_wpx_prefix
 from not1mm.lib.version import __version__
@@ -316,21 +311,12 @@ def output_cabrillo_line(line_to_output, ending, file_descriptor, file_encoding)
     )
 
 
-def cabrillo(self, file_encoding):
+def cabrillo(self, filename, file_encoding):
     """Generates Cabrillo file. Maybe."""
     # https://www.cqwpx.com/cabrillo.htm
     logger.debug("******Cabrillo*****")
     logger.debug("Station: %s", f"{self.station}")
     logger.debug("Contest: %s", f"{self.contest_settings}")
-    now = datetime.now()
-    date_time = now.strftime("%Y-%m-%d_%H-%M-%S")
-    filename = get_export_filename(
-        self,
-        f"{self.station.get('Call', '').upper().replace('/', '-')}_{cabrillo_name}_{date_time}.log",
-        "Cabrillo (*.log)",
-    )
-    if not filename:
-        return
     logger.debug("%s", filename)
     log = self.database.fetch_all_contacts_asc()
     try:

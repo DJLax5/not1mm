@@ -28,7 +28,6 @@ def load_plugin(kind: str):
     )
     plugin_common = types.ModuleType("not1mm.lib.plugin_common")
     plugin_common.gen_adif = lambda *args, **kwargs: None
-    plugin_common.get_export_filename = lambda *args, **kwargs: None
     plugin_common.imp_adif = lambda *args, **kwargs: None
     plugin_common.get_points = lambda *args, **kwargs: 0
     plugin_common.online_score_xml = lambda *args, **kwargs: ""
@@ -98,15 +97,8 @@ def test_cabrillo_formats_received_serials(kind, received_serial, expected, tmp_
         ),
         show_message_box=lambda _message: None,
     )
-    with (
-        patch.object(
-            plugin,
-            "get_export_filename",
-            lambda _self, name, _filter: str(tmp_path / name),
-        ),
-        patch.object(plugin, "calc_score", return_value=0),
-    ):
-        plugin.cabrillo(app, "ascii")
+    with patch.object(plugin, "calc_score", return_value=0):
+        plugin.cabrillo(app, str(tmp_path / "test.log"), "ascii")
 
     log_files = list(tmp_path.glob("*.log"))
     assert len(log_files) == 1

@@ -31,19 +31,12 @@
 # 10. Multipliers
 # ONE for each WAE country / DXCC entity worked on each band
 
-import datetime
 import logging
 
 
 from PyQt6 import QtWidgets
 
-from not1mm.lib.plugin_common import (
-    gen_adif,
-    imp_adif,
-    get_points,
-    online_score_xml,
-    get_export_filename,
-)
+from not1mm.lib.plugin_common import gen_adif, imp_adif, get_points, online_score_xml
 from not1mm.lib.version import __version__
 
 logger = logging.getLogger(__name__)
@@ -248,21 +241,12 @@ def format_received_serial(value):
     return "000" if serial == "0" else serial
 
 
-def cabrillo(self, file_encoding):
+def cabrillo(self, filename, file_encoding):
     """Generates Cabrillo file. Maybe."""
     # https://www.cqwpx.com/cabrillo.htm
     logger.debug("******Cabrillo*****")
     logger.debug("Station: %s", f"{self.station}")
     logger.debug("Contest: %s", f"{self.contest_settings}")
-    now = datetime.datetime.now()
-    date_time = now.strftime("%Y-%m-%d_%H-%M-%S")
-    filename = get_export_filename(
-        self,
-        f"{self.station.get('Call', '').upper().replace('/', '-')}_{cabrillo_name}_{date_time}.log",
-        "Cabrillo (*.log)",
-    )
-    if not filename:
-        return
     logger.debug("%s", filename)
     log = self.database.fetch_all_contacts_asc()
     try:

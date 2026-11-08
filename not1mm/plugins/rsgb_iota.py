@@ -42,18 +42,11 @@
 
 # pylint: disable=invalid-name, unused-argument, unused-variable, c-extension-no-member, unused-import
 
-import datetime
 import logging
 
 from PyQt6 import QtWidgets
 
-from not1mm.lib.plugin_common import (
-    gen_adif,
-    get_points,
-    imp_adif,
-    online_score_xml,
-    get_export_filename,
-)
+from not1mm.lib.plugin_common import gen_adif, get_points, imp_adif, online_score_xml
 from not1mm.lib.version import __version__
 
 assert online_score_xml
@@ -282,21 +275,12 @@ def convert_iota_number(iota: str) -> str:
     return iota
 
 
-def cabrillo(self, file_encoding):
+def cabrillo(self, filename, file_encoding):
     """Generates Cabrillo file. Maybe."""
     # https://www.cqwpx.com/cabrillo.htm
     logger.debug("******Cabrillo*****")
     logger.debug("Station: %s", f"{self.station}")
     logger.debug("Contest: %s", f"{self.contest_settings}")
-    now = datetime.datetime.now(datetime.UTC)
-    date_time = now.strftime("%Y-%m-%d_%H-%M-%S")
-    filename = get_export_filename(
-        self,
-        f"{self.station.get('Call', '').upper().replace('/', '-')}_{cabrillo_name}_{date_time}.log",
-        "Cabrillo (*.log)",
-    )
-    if not filename:
-        return
     logger.debug("%s", filename)
     log = self.database.fetch_all_contacts_asc()
     try:

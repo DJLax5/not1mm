@@ -11,19 +11,12 @@ Find rules at: https://memorial-ok1wc.cz/index.php?page=deniky
 # multiplier is last character of call, once per band
 # Cabrillo name: MWC
 
-import datetime
 import logging
 
 
 from PyQt6 import QtWidgets
 
-from not1mm.lib.plugin_common import (
-    gen_adif,
-    imp_adif,
-    get_points,
-    online_score_xml,
-    get_export_filename,
-)
+from not1mm.lib.plugin_common import gen_adif, imp_adif, get_points, online_score_xml
 from not1mm.lib.version import __version__
 
 logger = logging.getLogger(__name__)
@@ -185,20 +178,11 @@ def output_cabrillo_line(line_to_output, ending, file_descriptor, file_encoding)
     )
 
 
-def cabrillo(self, file_encoding):
+def cabrillo(self, filename, file_encoding):
     """Generates Cabrillo file. Maybe."""
     logger.debug("******Cabrillo*****")
     logger.debug("Station: %s", f"{self.station}")
     logger.debug("Contest: %s", f"{self.contest_settings}")
-    now = datetime.datetime.now()
-    date_time = now.strftime("%Y-%m-%d_%H-%M-%S")
-    filename = get_export_filename(
-        self,
-        f"{self.station.get('Call', '').upper().replace('/', '-')}_{cabrillo_name}_{date_time}.log",
-        "Cabrillo (*.log)",
-    )
-    if not filename:
-        return
     logger.debug("%s", filename)
     log = self.database.fetch_all_contacts_asc()
     try:
